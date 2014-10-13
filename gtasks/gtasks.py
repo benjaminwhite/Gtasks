@@ -6,9 +6,8 @@ import os
 import webbrowser
 
 from pprint import pprint
-from time import time
-
 from requests_oauthlib import OAuth2Session
+from time import time
 
 class Gtasks:
     SCOPE = ['https://www.googleapis.com/auth/tasks',
@@ -79,10 +78,6 @@ class Gtasks:
         tasks = self.google.get('https://www.googleapis.com/tasks/v1/lists/{}'
                 '/tasks'.format(task_list)).json()
         return tasks
-
-#class Task:
-    #def from_dict(json_dict):
-        #pass
 
 if __name__ == '__main__':
     gt = Gtasks()
