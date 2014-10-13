@@ -20,10 +20,10 @@ class Gtasks:
         self.account = account
         self.load_credentials()
 
-        tokens = keyring.get_password('gtasks.py', self.account)
+        refresh_token = keyring.get_password('gtasks.py', self.account)
 
-        if tokens:
-            self.refresh_authentication(tokens)
+        if refresh_token:
+            self.refresh_authentication(refresh_token)
         else:
             self.authenticate()
 
@@ -41,20 +41,13 @@ class Gtasks:
         else:
             raise Exception('No valid Credentials file found.')
 
-    def refresh_authentication(self, tokens):
-        if type(tokens) is str:
-            tokens = json.loads(tokens)
-
-        tokens['expires_in'] = time() - 10
-
+    def refresh_authentication(self, refresh_token):
         extra = {'client_id': self.client_id, 'client_secret': self.client_secret}
 
-        def updater(token):
-            keyring.set_password('gtasks.py', self.account, json.dumps(token))
+        self.google = OAuth2Session(self.client_id, scope=Gtasks.SCOPE,
+                redirect_uri=self.redirect_uri, auto_refresh_kwargs=extra)
 
-        self.google = OAuth2Session(self.client_id, token=tokens,
-                auto_refresh_url=Gtasks.TOKEN_URL, auto_refresh_kwargs=extra,
-                token_updater=updater)
+        self.google.refresh_token(Gtasks.TOKEN_URL, refresh_token)
 
     def authenticate(self):
         self.google = OAuth2Session(self.client_id, scope=Gtasks.SCOPE,
@@ -72,7 +65,7 @@ class Gtasks:
         tokens = self.google.fetch_token(Gtasks.TOKEN_URL,
                 client_secret=self.client_secret, code=redirect_response)
 
-        keyring.set_password('gtasks.py', self.account, json.dumps(tokens))
+        keyring.set_password('gtasks.py', self.account, tokens['refresh_token'])
 
         print('Thank you!')
 
