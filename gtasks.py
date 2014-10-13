@@ -16,9 +16,11 @@ class Gtasks:
     AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
     TOKEN_URL = 'https://accounts.google.com/o/oauth2/token'
 
-    def __init__(self, account='default'):
+    def __init__(self, account='default', open_browser=True):
         self.account = account
         self.load_credentials()
+
+        self.open_browser = open_browser
 
         refresh_token = keyring.get_password('gtasks.py', self.account)
 
@@ -53,14 +55,18 @@ class Gtasks:
         self.google = OAuth2Session(self.client_id, scope=Gtasks.SCOPE,
                 redirect_uri=self.redirect_uri)
 
-        authorization_url, state = self.google.authorization_url(Gtasks.AUTH_URL,
-                access_type='offline', approval_prompt='force') # need state?
+        authorization_url, __ = self.google.authorization_url(Gtasks.AUTH_URL,
+                access_type='offline', approval_prompt='force')
 
-        webbrowser.open_new_tab(authorization_url)
+        if self.open_browser:
+            print('The following URL has been opened in your web browser:\n')
+            webbrowser.open_new_tab(authorization_url)
+        else:
+            print('Please copy the following URL into your web browser:\n')
 
-        redirect_response = input(
-                '{}\n\nPlease visit the url and paste the response code '
-                'below:\n'.format(authorization_url))
+        print(authorization_url)
+
+        redirect_response = input('\nPlease paste the response code below:\n')
 
         tokens = self.google.fetch_token(Gtasks.TOKEN_URL,
                 client_secret=self.client_secret, code=redirect_response)
