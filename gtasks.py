@@ -6,6 +6,7 @@ import os
 import webbrowser
 
 from pprint import pprint
+from time import time
 
 from requests_oauthlib import OAuth2Session
 
@@ -44,13 +45,15 @@ class Gtasks:
         if type(tokens) is str:
             tokens = json.loads(tokens)
 
+        tokens['expires_in'] = time() - 10
+
         extra = {'client_id': self.client_id, 'client_secret': self.client_secret}
 
         def updater(token):
-            keyring.set_password('gtasks.py', self.account, token)
+            keyring.set_password('gtasks.py', self.account, json.dumps(token))
 
         self.google = OAuth2Session(self.client_id, token=tokens,
-                auto_refresh_url=Gtasks.AUTH_URL, auto_refresh_kwargs=extra,
+                auto_refresh_url=Gtasks.TOKEN_URL, auto_refresh_kwargs=extra,
                 token_updater=updater)
 
     def authenticate(self):
@@ -61,11 +64,9 @@ class Gtasks:
                 access_type='offline', approval_prompt='force') # need state?
 
         webbrowser.open_new_tab(authorization_url)
-        #pyperclip.copy(authorization_url)
 
         redirect_response = input(
-                'The following URL has been copied into your clipboard:'
-                '\n\n{}\n\nPlease visit the url and paste the response code '
+                '{}\n\nPlease visit the url and paste the response code '
                 'below:\n'.format(authorization_url))
 
         tokens = self.google.fetch_token(Gtasks.TOKEN_URL,
@@ -79,6 +80,10 @@ class Gtasks:
         tasks = self.google.get('https://www.googleapis.com/tasks/v1/lists/{}'
                 '/tasks'.format(task_list)).json()
         return tasks
+
+#class Task:
+    #def from_dict(json_dict):
+        #pass
 
 if __name__ == '__main__':
     gt = Gtasks()
