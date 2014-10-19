@@ -95,7 +95,7 @@ class Gtasks:
                     item._dict = item_dict
                 else:
                     item = item_type(item_dict, self)
-                results.append(task)
+                results.append(item)
 
             if 'nextPageToken' in response and len(results) < max_results:
                 parameters['pageToken'] = response['nextPageToken']
@@ -133,5 +133,5 @@ if __name__ == '__main__':
     #pprint(tasks)
     for t in tasks:
         print(t)
-        t.title = t.title + ' banana'
-        print(t)
+        #t.title = t.title + ' banana'
+        #print(t)

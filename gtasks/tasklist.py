@@ -1,11 +1,16 @@
-class TaskList(object):
+from gtaskobject import GtaskObject
+
+class TaskList(GtaskObject):
     def __init__(self, list_dict, gtasks):
-        self._dict = list_dict
-        self._gtasks = gtasks
-        self._task_index = {}
+        GtaskObject.__init__(self, list_dict, gtasks)
 
         self.auto_push = gtasks.auto_push
         self.auto_pull = gtasks.auto_pull
+        self._task_index = {}
 
-    def tasks(self):
-        return self._gtasks.tasks(self.id)
+    def push_tasks_updates(self):
+        for task in self._task_index:
+            task.push_updates()
+
+    def tasks(self, **kwargs):
+        return self._google.tasks(self.id, **kwargs)
