@@ -11,7 +11,9 @@ import keyring
 from requests_oauthlib import OAuth2Session
 from strict_rfc3339 import timestamp_to_rfc3339_utcoffset, validate_rfc3339
 
+#import timeconversion as tc
 from task import Task
+from tasklist import TaskList
 
 class Gtasks:
     SCOPE = ['https://www.googleapis.com/auth/tasks',
@@ -19,6 +21,7 @@ class Gtasks:
     AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
     TOKEN_URL = 'https://accounts.google.com/o/oauth2/token'
     TASKS_URL = 'https://www.googleapis.com/tasks/v1/lists/{}/tasks'
+    LISTS_URL = 'https://www.googleapis.com/tasks/v1/users/@me/lists'
 
     def __init__(self, identifier='default', auto_push=True, auto_pull=False,
             open_browser=True, credentials_location=None):
@@ -26,13 +29,14 @@ class Gtasks:
         self.auto_push = auto_push
         self.auto_pull = auto_pull
         self.open_browser = open_browser
+        self._task_index = {}
+        self._list_index = {}
 
         self.credentials_location = (credentials_location or
                 os.path.join(os.path.dirname(__file__), 'credentials.json'))
         self.load_credentials()
 
         refresh_token = keyring.get_password('gtasks.py', self.identifier)
-
         if refresh_token:
             self.refresh_authentication(refresh_token)
         else:
@@ -59,7 +63,6 @@ class Gtasks:
     def authenticate(self):
         self.google = OAuth2Session(self.client_id, scope=Gtasks.SCOPE,
                 redirect_uri=self.redirect_uri)
-
         authorization_url, __ = self.google.authorization_url(Gtasks.AUTH_URL,
                 access_type='offline', approval_prompt='force')
 
@@ -72,48 +75,50 @@ class Gtasks:
                     '\n\n{}\n\nPlease paste the response code below:\n')
 
         redirect_response = safe_input(prompt.format(authorization_url))
+        print('Thank you!')
 
         tokens = self.google.fetch_token(Gtasks.TOKEN_URL,
                 client_secret=self.client_secret, code=redirect_response)
-
         keyring.set_password('gtasks.py', self.identifier, tokens['refresh_token'])
 
-        print('Thank you!')
-
-    def tasks(self, task_list='@default', include_completed=True, max_results=None,
-            due_min=None, due_max=None, completed_min=None, completed_max=None,
-            include_deleted=False, include_hidden=False):
-        url = Gtasks.TASKS_URL.format(task_list)
-        parameters = {
-                'showCompleted': include_completed,
-                'showDeleted': include_deleted,
-                'showHidden': include_hidden,
-                }
-
-        if max_results is None:
-            max_results = float('inf')
-        else:
-            parameters['maxResults'] = max_results
-
+    def _download_items(self, url, parameters, item_type, item_index, max_results):
         results = []
         while True:
             whats_left = max_results - len(results)
             parameters['maxResults'] = min(whats_left, 100)
 
             response = self.google.get(url, params=parameters).json()
-
-            results.extend(Task.from_dict(d, self) for d in response['items'])
+            for item_dict in response['items']:
+                item_id = item_dict['id'] 
+                if item_id in item_index:
+                    item = item_index[item_id]
+                    item._dict = item_dict
+                else:
+                    item = item_type(item_dict, self)
+                results.append(task)
 
             if 'nextPageToken' in response and len(results) < max_results:
                 parameters['pageToken'] = response['nextPageToken']
             else:
                 break
-
         return results
 
+    def tasks(self, task_list='@default', max_results=float('inf'),
+            due_min=None, due_max=None, completed_min=None, completed_max=None,
+            include_completed=True, include_deleted=False, include_hidden=False):
+        url = Gtasks.TASKS_URL.format(task_list)
+        parameters = {
+                'showCompleted': include_completed,
+                'showDeleted': include_deleted,
+                'showHidden': include_hidden,
+                }
+        return self._download_items(url, parameters, Task, self._task_index,
+                max_results)
+
     def lists(self):
-        lists = self.google.get('https://www.googleapis.com/tasks/v1/users/@me/lists')
-        return lists.json()
+        parameters = {}
+        return self._download_items(Gtasks.LISTS_URL, parameters, TaskList,
+                self._list_index, max_results)
 
 def safe_input(prompt):
     if sys.version_info[0] == 2:
@@ -124,9 +129,9 @@ def safe_input(prompt):
 if __name__ == '__main__':
     gt = Gtasks()
     tasks = gt.tasks(include_completed=False)
-    #pprint(gt.lists())
+    #tasks = gt.tasks(max_results=10)
+    #pprint(tasks)
     for t in tasks:
-        print(t._self_link)
-        #t.title = t.title + ' banana'
-        #print(t)
-    #gt.tasks(include_completed=False)
+        print(t)
+        t.title = t.title + ' banana'
+        print(t)
