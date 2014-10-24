@@ -1,8 +1,10 @@
 import re
 import sys
 
-from gtaskobject import GtaskObject, raise_for_type
+from gtaskobject import GtaskObject
 from tasklist import TaskList
+from timeconversion import to_rfc3339, from_rfc3339 
+from misc import raise_for_type
 
 class Task(GtaskObject):
     LIST_REGEX = re.compile('lists/(\w+)/tasks')
@@ -48,7 +50,32 @@ class Task(GtaskObject):
         if value:
             self._set_property('status', 'completed')
         else:
+            self._set_property('completed', None, push_override=False)
             self._set_property('status', 'needsAction')
+
+    # due_date property
+    @property
+    def due_date(self):
+        date = self._get_property('due')
+        if date is not None:
+            date = from_rfc3339(date)
+        return date
+
+    @due_date.setter
+    def due_date(self, value):
+        self._set_property('due', to_rfc3339(value))
+
+    # completion_date property
+    @property
+    def completion_date(self):
+        date = self._get_property('completed')
+        if date is not None:
+            date = from_rfc3339(date)
+        return date
+
+    @completion_date.setter
+    def completion_date(self, value):
+        self._set_property('completed', to_rfc3339(value))
 
     # deleted property
     @property
@@ -57,18 +84,8 @@ class Task(GtaskObject):
 
     @deleted.setter
     def deleted(self, value):
-        self._set_property('notes', value, bool)
+        self._set_property('deleted', value, bool)
 
-    # Python2's Unicode Magic Method
     def __unicode__(self):
         mark = u'\u2713' if self.complete else u' ' # u2713 is a checkmark
         return u'({}) {}'.format(mark, self.title)
-
-    def __str__(self):
-        if sys.version_info[0] == 2:
-            return self.__unicode__().encode('utf-8') # python2's str = bytes
-        else:
-            return self.__unicode__() # python3's str = unicode
-
-    def __repr__(self):
-        return '<Task {}>'.format(self.id)

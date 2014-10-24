@@ -2,18 +2,15 @@
 
 import json
 import os
-import sys
 import webbrowser
-from pprint import pprint
-from time import time
 
 import keyring
 from requests_oauthlib import OAuth2Session
-from strict_rfc3339 import timestamp_to_rfc3339_utcoffset, validate_rfc3339
 
-#import timeconversion as tc
+from misc import compatible_input
 from task import Task
 from tasklist import TaskList
+from timeconversion import to_rfc3339, from_rfc3339
 
 class Gtasks:
     SCOPE = ['https://www.googleapis.com/auth/tasks',
@@ -74,7 +71,7 @@ class Gtasks:
             prompt = ('Please copy the following URL into your web browser:'
                     '\n\n{}\n\nPlease paste the response code below:\n')
 
-        redirect_response = safe_input(prompt.format(authorization_url))
+        redirect_response = compatible_input(prompt.format(authorization_url))
         print('Thank you!')
 
         tokens = self.google.fetch_token(Gtasks.TOKEN_URL,
@@ -89,7 +86,7 @@ class Gtasks:
 
             response = self.google.get(url, params=parameters).json()
             for item_dict in response['items']:
-                item_id = item_dict['id'] 
+                item_id = item_dict['id']
                 if item_id in item_index:
                     item = item_index[item_id]
                     item._dict = item_dict
@@ -112,26 +109,22 @@ class Gtasks:
                 'showDeleted': include_deleted,
                 'showHidden': include_hidden,
                 }
+        if due_min:
+            parameters['dueMin'] = to_rfc3339(due_min)
+        if due_max:
+            parameters['dueMax'] = to_rfc3339(due_max)
+        if completed_min:
+            parameters['completedMin'] = to_rfc3339(completed_min)
+        if completed_max:
+            parameters['completedMax'] = to_rfc3339(completed_max)
         return self._download_items(url, parameters, Task, self._task_index,
                 max_results)
 
-    def lists(self):
+    def lists(self, max_results=float('inf')):
         parameters = {}
         return self._download_items(Gtasks.LISTS_URL, parameters, TaskList,
                 self._list_index, max_results)
 
-def safe_input(prompt):
-    if sys.version_info[0] == 2:
-        return raw_input(prompt)
-    else:
-        return input(prompt)
-
 if __name__ == '__main__':
     gt = Gtasks()
-    tasks = gt.tasks(include_completed=False)
-    #tasks = gt.tasks(max_results=10)
-    #pprint(tasks)
-    for t in tasks:
-        print(t)
-        #t.title = t.title + ' banana'
-        #print(t)
+    tasks = gt.tasks()
