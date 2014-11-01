@@ -1,5 +1,7 @@
 import json
+from contextlib import contextmanager
 
+import timeconversion as tc
 from misc import unicode_to_str, raise_for_type
 
 class GtaskObject(object):
@@ -21,7 +23,7 @@ class GtaskObject(object):
                     headers=self._update_headers, params=self._update_params,
                     data=json.dumps(self._update_body))
             response.raise_for_status()
-            self._dict.update(response.json())
+            self._dict = response.json()
             self._update_body.clear()
 
     def pull_updates(self):
@@ -70,6 +72,14 @@ class GtaskObject(object):
         raise_for_type(value, bool)
         self._auto_pull = value
 
+    @contextmanager
+    def batch_edit(self):
+        old_value = self._auto_push
+        self._auto_push = False
+        yield
+        self.push_updates()
+        self._auto_push = old_value
+
     # id property (read-only)
     @property
     def id(self):
@@ -80,7 +90,7 @@ class GtaskObject(object):
     def updated_date(self):
         date = self._get_property('updated')
         if date is not None:
-            date = from_rfc3339(date)
+            date = tc.from_rfc3339(date)
         return date
 
     # title property
@@ -92,6 +102,9 @@ class GtaskObject(object):
     def title(self, value):
         self._set_property('title', value, str)
 
+    def __hash__(self):
+        return self._dict['id']
+
     def __unicode__(self):
         return u'{}'.format(self.title)
 
@@ -100,7 +113,8 @@ class GtaskObject(object):
 
     def __repr__(self):
         short_title = self.title
-        if short_title and len(short_title) > 15:
-            short_title = '{}...'.format(short_title[:12])
-        rep = '<{} "{}":{}>'.format(self.__class__.__name__, short_title, self.id)
+        if short_title and len(short_title) > 30:
+            short_title = '{}...'.format(short_title[:27])
+        rep = '<{} "{}":{}>'.format(self.__class__.__name__, short_title,
+                self._dict['id'])
         return unicode_to_str(rep)
