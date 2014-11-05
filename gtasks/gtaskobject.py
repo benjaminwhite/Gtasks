@@ -112,9 +112,8 @@ class GtaskObject(object):
         return unicode_to_str(self.__unicode__())
 
     def __repr__(self):
-        short_title = self.title
+        short_title = unicode_to_str(self.title)
+        obj_id = unicode_to_str(self._dict['id'])
         if short_title and len(short_title) > 30:
             short_title = '{}...'.format(short_title[:27])
-        rep = '<{} "{}":{}>'.format(self.__class__.__name__, short_title,
-                self._dict['id'])
-        return unicode_to_str(rep)
+        return '<{} "{}":{}>'.format(self.__class__.__name__, short_title, obj_id)
