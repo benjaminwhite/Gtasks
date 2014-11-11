@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 import json
 from contextlib import contextmanager
 
-import timeconversion as tc
-from misc import unicode_to_str, raise_for_type
+import gtasks.timeconversion as tc
+from gtasks.misc import unicode_to_str, raise_for_type
 
 class GtaskObject(object):
     def __init__(self, item_dict, gtasks):

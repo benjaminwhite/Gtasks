@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+from __future__ import absolute_import
 
 import json
 import os
@@ -8,10 +8,10 @@ from contextlib import contextmanager
 import keyring
 from requests_oauthlib import OAuth2Session
 
-import timeconversion as tc
-from misc import compatible_input
-from task import Task
-from tasklist import TaskList
+import gtasks.timeconversion as tc
+from gtasks.misc import compatible_input
+from gtasks.task import Task
+from gtasks.tasklist import TaskList
 
 class Gtasks(object):
     SCOPE = ['https://www.googleapis.com/auth/tasks',
