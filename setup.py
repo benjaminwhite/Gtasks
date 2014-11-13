@@ -1,3 +1,5 @@
+import gtasks
+
 try:
     from setuptools import setup
 except ImportError:
@@ -5,7 +7,7 @@ except ImportError:
 
 setup(
     name = 'gtasks',
-    version = '0.1',
+    version = gtasks.__version__,
     description = 'A better Google Tasks Python module',
     author = 'Benjamin White',
     author_email = 'ben.white@berkeley.edu',
