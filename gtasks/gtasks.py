@@ -83,8 +83,8 @@ class Gtasks(object):
 
             response = self.google.get(url, params=params)
             response.raise_for_status()
-            dicts = response.json().get('items', [])
-            for item_dict in dicts:
+            response_dict = response.json()
+            for item_dict in response_dict.get('items', ()):
                 item_id = item_dict['id']
                 if item_id in item_index:
                     item = item_index[item_id]
@@ -92,9 +92,8 @@ class Gtasks(object):
                 else:
                     item = item_type(item_dict, self)
                 results.append(item)
-
-            if 'nextPageToken' in response and len(results) < max_results:
-                params['pageToken'] = response['nextPageToken']
+            if 'nextPageToken' in response_dict and len(results) < max_results:
+                params['pageToken'] = response_dict['nextPageToken']
             else:
                 break
         return results
