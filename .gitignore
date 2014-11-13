@@ -1,2 +1,4 @@
 *.pyc
 credentials.json
+dist
+gtasks.egg-info
