@@ -23,7 +23,9 @@ for task in scotch:
 
 ## Installation
 
-`pip install gtasks`
+```bash
+pip install gtasks
+```
 
 ## Features
 
