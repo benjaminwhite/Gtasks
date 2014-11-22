@@ -1,6 +1,6 @@
 # Gtasks: a better Google Tasks Package
 [![Latest Version](https://pypip.in/version/gtasks/badge.svg?style=flat)](https://pypi.python.org/pypi/gtasks/)
-
+[![Downloads](https://pypip.in/download/gtasks/badge.svg?style=flat)](https://pypi.python.org/pypi/gtasks/)
 ## Overview
 
 Gtasks is a Google Tasks python package that emphasizes simplicity and ease of use. If you've ever felt frustrated with Google's [Tasks API Client Library](https://developers.google.com/api-client-library/python/apis/tasks/v1), then Gtasks is for you.
